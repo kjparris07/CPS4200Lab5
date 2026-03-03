@@ -9,7 +9,7 @@
  
 // CPS4200
 // initialize global variables
-int sched_policy = 0; // 0: default round robin; 1: priority-based
+int sched_policy = 1; // 0: default round robin; 1: priority-based
 int sched_trace_enabled = 1;
 
 struct {
@@ -365,12 +365,31 @@ sched2(void)
   // Note: In our design, lower the priority value, higher the actual priority (e.g, 0 is the highest, 10 is the lowest)
   // So if a process has a lower priority value, the variable highest_priority should be updated.
 
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state == RUNNABLE){
+      if(p->priority < highest_priority){
+        highest_priority = p->priority;
+      }
+    }
+  }
   //TODO: traverse ptable again, select the first RUNNABLE process whose priority matches highest_priority
   //Once found, copy/paste the dispatcher code right after
 
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state == RUNNABLE && p->priority == highest_priority){
+      proc = p;
+      switchuvm(p);
+      p->state = RUNNING;
+      swtch(&cpu->scheduler, proc->context);
+      switchkvm();
+      proc = 0;
+    }
+  }
+
+  
+  
   //clear the compiler warning about unused variable
   //you will need to remove this line when completing your code
-  (void)highest_priority;
 
 
   //for fixing 100% cpu issue, do NOT touch
